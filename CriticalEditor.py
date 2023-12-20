@@ -3,7 +3,6 @@ import csv
 from collections import defaultdict
 from docx import Document
 
-
 # Function to load CSV data
 def load_csv(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -12,65 +11,61 @@ def load_csv(file_path):
         data = [row for row in reader]  # Read the remaining data
     return headers, data
 
-
-def create_critical_edition(csv_data, headers):
+def create_critical_edition_grouped(csv_data, headers):
     doc = Document()
-
+    
     for row in csv_data:
         line_variations = defaultdict(list)
 
+        # Collect all variations of each line
         for i, line in enumerate(row):
             line_variations[line].append(headers[i])
 
-        # Remove blank line entry for processing
-        blank_line_editions = line_variations.pop('', None)
-
         # Find the most common line (excluding blanks)
-        if line_variations:
-            most_common_line, editions_with_most_common = max(line_variations.items(), key=lambda item: len(item[1]))
-        else:
-            most_common_line, editions_with_most_common = None, []
+        most_common_line = max(line_variations.keys(), key=lambda l: (len(line_variations[l]), l), default=None)
+        most_common_editions = line_variations.pop(most_common_line, [])
 
-        # Rule 1: Add line if it's the same across all editions
-        if len(line_variations) == 0:
-            doc.add_paragraph(most_common_line)
-            continue
-
-        # Add the most common line
+        # Add the most common line and its editions to the document
         if most_common_line:
             doc.add_paragraph(most_common_line)
+            if most_common_editions:
+                editions_str = ', '.join(most_common_editions)
+                doc.add_paragraph(f"(Editions {editions_str} write it as: '{most_common_line}')")
 
-        # Rule 3: Handle variations, including blanks
+        # Add other variations to the document
         for line, editions in line_variations.items():
-            if line != most_common_line:  # Exclude the most common line
+            if line:  # If the line is not blank
                 editions_str = ', '.join(editions)
-                doc.add_paragraph(f"({editions_str} reads as: '{line}')")
-
-        # Include blank line information if it exists
-        if blank_line_editions:
-            blank_editions_str = ', '.join(blank_line_editions)
-            doc.add_paragraph(f"(There is no line in {blank_editions_str} here)")
+                doc.add_paragraph(f"(Editions {editions_str} write it as: '{line}')")
+            else:  # If the line is blank
+                editions_str = ', '.join(editions)
+                doc.add_paragraph(f"(There is no line in editions {editions_str})")
 
     return doc
 
 
-# Your existing load_csv and create_critical_edition functions go here
-
+# Function to process a folder of CSV files and output them as DOCX files
 def process_csv_folder(source_folder_path, output_folder_path):
     # Create the output folder if it doesn't exist
     if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
 
+    # Process each CSV file in the source folder
     for filename in os.listdir(source_folder_path):
         if filename.endswith('.csv'):
             csv_file_path = os.path.join(source_folder_path, filename)
             headers, csv_data = load_csv(csv_file_path)
             
-            critical_edition_doc = create_critical_edition(csv_data, headers)
+            # Create the critical edition document
+            critical_edition_doc = create_critical_edition_grouped(csv_data, headers)
             
+            # Define the output DOCX file path
             output_docx_path = os.path.join(output_folder_path, f"{os.path.splitext(filename)[0]}_critical_edition.docx")
+            
+            # Save the DOCX file
             critical_edition_doc.save(output_docx_path)
             print(f"Processed and saved: {filename}")
+
 
 # Example usage
 source_folder = '/Users/enesyilandiloglu/Documents/GitHub/Kakule_1/CompLit/AlignedPoems'  # Replace with your source folder path
