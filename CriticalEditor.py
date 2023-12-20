@@ -30,7 +30,7 @@ def create_critical_edition(csv_data, headers):
             doc.add_paragraph(most_common_line)
             if most_common_editions:
                 editions_str = ', '.join(most_common_editions)
-                doc.add_paragraph(f"(In{editions_str}, written it as: '{most_common_line}')")
+                doc.add_paragraph(f"(In {editions_str}, written it as: '{most_common_line}')")
 
         # Add other variations to the document
         for line, editions in line_variations.items():
