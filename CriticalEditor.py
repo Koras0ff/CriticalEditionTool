@@ -11,7 +11,7 @@ def load_csv(file_path):
         data = [row for row in reader]  # Read the remaining data
     return headers, data
 
-def create_critical_edition_grouped(csv_data, headers):
+def create_critical_edition(csv_data, headers):
     doc = Document()
     
     for row in csv_data:
@@ -30,16 +30,16 @@ def create_critical_edition_grouped(csv_data, headers):
             doc.add_paragraph(most_common_line)
             if most_common_editions:
                 editions_str = ', '.join(most_common_editions)
-                doc.add_paragraph(f"(Editions {editions_str} write it as: '{most_common_line}')")
+                doc.add_paragraph(f"(In{editions_str}, written it as: '{most_common_line}')")
 
         # Add other variations to the document
         for line, editions in line_variations.items():
             if line:  # If the line is not blank
                 editions_str = ', '.join(editions)
-                doc.add_paragraph(f"(Editions {editions_str} write it as: '{line}')")
+                doc.add_paragraph(f"(In {editions_str} written it as: '{line}')")
             else:  # If the line is blank
                 editions_str = ', '.join(editions)
-                doc.add_paragraph(f"(There is no line in editions {editions_str})")
+                doc.add_paragraph(f"(There is no line in {editions_str})")
 
     return doc
 
@@ -57,7 +57,7 @@ def process_csv_folder(source_folder_path, output_folder_path):
             headers, csv_data = load_csv(csv_file_path)
             
             # Create the critical edition document
-            critical_edition_doc = create_critical_edition_grouped(csv_data, headers)
+            critical_edition_doc = create_critical_edition(csv_data, headers)
             
             # Define the output DOCX file path
             output_docx_path = os.path.join(output_folder_path, f"{os.path.splitext(filename)[0]}_critical_edition.docx")
